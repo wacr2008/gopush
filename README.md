@@ -64,5 +64,5 @@ gopush
 
 
 
-![架构][1]
-  [1]: sdafsfsdfd
+![架构](https://github.com/ikenchina/gopush/blob/master/arch.png)
+
