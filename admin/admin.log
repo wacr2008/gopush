@@ -1,0 +1,14 @@
+2016/06/20 11:16:23 INFO messagequeue.go[62] : init MessageQueueNSQ successful(127.0.0.1:4150)
+2016/06/20 11:16:23 INFO main.go[49] : init messege queue successful.
+2016/06/20 11:16:23 INFO storage.go[81] : RedisStorage.initRedis
+2016/06/20 11:16:23 INFO storage.go[91] : RedisStorage.initRedis node succesful (redis1@127.0.0.1:6379)
+2016/06/20 11:16:23 INFO main.go[57] : init storage successful.
+2016/06/20 11:16:23 INFO online.go[98] : init online notify channel size : 8
+2016/06/20 11:16:23 INFO http.go[50] : start http listen : {tcp 0.0.0.0:8880}
+2016/06/20 11:20:07 INFO messagequeue.go[62] : init MessageQueueNSQ successful(127.0.0.1:4150)
+2016/06/20 11:20:07 INFO main.go[49] : init messege queue successful.
+2016/06/20 11:20:07 INFO storage.go[81] : RedisStorage.initRedis
+2016/06/20 11:20:07 INFO storage.go[91] : RedisStorage.initRedis node succesful (redis1@127.0.0.1:6379)
+2016/06/20 11:20:07 INFO main.go[57] : init storage successful.
+2016/06/20 11:20:07 INFO online.go[98] : init online notify channel size : 8
+2016/06/20 11:20:07 INFO http.go[50] : start http listen : {tcp 0.0.0.0:8880}

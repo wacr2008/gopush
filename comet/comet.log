@@ -1,0 +1,13 @@
+2016/06/20 11:21:39 INFO main.go[40] : init log successful
+2016/06/20 11:21:39 INFO websocket.go[37] : comet server start websocket listen: 0.0.0.0:8101
+2016/06/20 11:21:41 INFO adminrpc.go[160] : Init admin Rpc (tcp@localhost:7001) sub successfuls
+2016/06/20 11:21:41 ERROR pushrpc.go[104] : pushRpc.Dial(tcp@localhost:9001) failed : dial tcp 127.0.0.1:9001: getsockopt: connection refused
+2016/06/20 11:21:41 INFO pushrpc.go[109] : Init push Rpc (tcp@localhost:9001) sub successfuls
+2016/06/20 11:21:41 ERROR pushrpc.go[31] : init push rpc failed : dial tcp 127.0.0.1:9001: getsockopt: connection refused
+2016/06/20 11:34:47 INFO main.go[40] : init log successful
+2016/06/20 11:34:47 INFO websocket.go[37] : comet server start websocket listen: 0.0.0.0:8101
+2016/06/20 11:34:47 INFO adminrpc.go[160] : Init admin Rpc (tcp@localhost:7001) sub successfuls
+2016/06/20 11:34:47 INFO pushrpc.go[109] : Init push Rpc (tcp@localhost:9001) sub successfuls
+2016/06/20 11:34:47 INFO main.go[51] : init comet server successful
+2016/06/20 11:34:47 INFO main.go[58] : init  rpc  server successful
+2016/06/20 11:34:47 INFO rpc.go[41] : Rpc listen(tcp@localhost:8201) successful

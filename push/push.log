@@ -1,0 +1,186 @@
+2016/06/20 11:16:26 INFO main.go[33] : init log successful
+2016/06/20 11:16:26 INFO comet.go[58] : dial comet rpc (tcp@127.0.0.1:8201)......
+2016/06/20 11:16:26 INFO comet.go[62] : comet rpc first dial...
+2016/06/20 11:16:26 INFO comet.go[67] : connect to comet [tcp@127.0.0.1:8201] successful.
+2016/06/20 11:16:26 INFO messagequeue.go[52] : init message queue successful([127.0.0.1:4161])
+2016/06/20 11:16:26 INFO messagequeue.go[73] : MessageQueueNSQ start
+2016/06/20 11:16:26 INFO messagequeue.go[59] : start message queue successful
+
+2016/06/20 11:16:26 INFO storage.go[50] : RedisStorage.initRedis
+2016/06/20 11:16:26 INFO rpc.go[39] : Rpc listen(tcp@localhost:9001) successful
+2016/06/20 11:20:11 INFO main.go[33] : init log successful
+2016/06/20 11:20:11 INFO comet.go[58] : dial comet rpc (tcp@127.0.0.1:8201)......
+2016/06/20 11:20:11 INFO comet.go[62] : comet rpc first dial...
+2016/06/20 11:20:11 INFO comet.go[67] : connect to comet [tcp@127.0.0.1:8201] successful.
+2016/06/20 11:20:11 INFO messagequeue.go[52] : init message queue successful([127.0.0.1:4161])
+2016/06/20 11:20:11 INFO messagequeue.go[73] : MessageQueueNSQ start
+2016/06/20 11:20:11 INFO messagequeue.go[59] : start message queue successful
+
+2016/06/20 11:20:11 INFO storage.go[50] : RedisStorage.initRedis
+2016/06/20 11:20:11 INFO rpc.go[39] : Rpc listen(tcp@localhost:9001) successful
+2016/06/20 11:20:11 INFO storage.go[59] : RedisStorage.initRedis node succesful (redis1@127.0.0.1:6379)
+2016/06/20 11:21:42 INFO main.go[33] : init log successful
+2016/06/20 11:21:42 INFO comet.go[58] : dial comet rpc (tcp@127.0.0.1:8201)......
+2016/06/20 11:33:42 INFO main.go[33] : init log successful
+2016/06/20 11:33:42 INFO comet.go[58] : dial comet rpc (tcp@127.0.0.1:8201)......
+2016/06/20 11:33:42 INFO comet.go[62] : comet rpc first dial...
+2016/06/20 11:33:42 INFO comet.go[67] : connect to comet [tcp@127.0.0.1:8201] successful.
+2016/06/20 11:33:42 INFO messagequeue.go[52] : init message queue successful([127.0.0.1:4161])
+2016/06/20 11:33:42 INFO messagequeue.go[73] : MessageQueueNSQ start
+2016/06/20 11:33:42 INFO messagequeue.go[59] : start message queue successful
+
+2016/06/20 11:33:42 INFO storage.go[50] : RedisStorage.initRedis
+2016/06/20 11:33:42 INFO rpc.go[39] : Rpc listen(tcp@localhost:9001) successful
+2016/06/20 11:33:42 INFO storage.go[59] : RedisStorage.initRedis node succesful (redis1@127.0.0.1:6379)
+2016/06/20 11:34:43 INFO main.go[33] : init log successful
+2016/06/20 11:34:43 INFO comet.go[58] : dial comet rpc (tcp@127.0.0.1:8201)......
+2016/06/20 11:34:43 INFO comet.go[62] : comet rpc first dial...
+2016/06/20 11:34:43 INFO comet.go[67] : connect to comet [tcp@127.0.0.1:8201] successful.
+2016/06/20 11:34:43 INFO messagequeue.go[52] : init message queue successful([127.0.0.1:4161])
+2016/06/20 11:34:43 INFO messagequeue.go[73] : MessageQueueNSQ start
+2016/06/20 11:34:43 INFO messagequeue.go[59] : start message queue successful
+
+2016/06/20 11:34:43 INFO storage.go[50] : RedisStorage.initRedis
+2016/06/20 11:34:43 INFO rpc.go[39] : Rpc listen(tcp@localhost:9001) successful
+2016/06/20 11:34:43 INFO storage.go[59] : RedisStorage.initRedis node succesful (redis1@127.0.0.1:6379)
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
+2016/06/20 11:34:43 ERROR comet.go[270] : getCometByServerId([1]) failed : <nil>
