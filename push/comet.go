@@ -1,22 +1,22 @@
 package main
 
 import (
+	log "github.com/ikenchina/golog"
+	"github.com/pquerna/ffjson/ffjson"
+	"math/rand"
 	"net/rpc"
 	"time"
-	"math/rand"
-	"github.com/pquerna/ffjson/ffjson"
-	log "github.com/ikenchina/golog"
-	
+
 	"gopush/libs/define"
 	"gopush/libs/proto"
 )
 
 const (
-	CometService              = "RPC"
-	CometServicePing          = "RPC.Ping"
+	CometService               = "RPC"
+	CometServicePing           = "RPC.Ping"
 	CometServiceSPushMsg       = "RPC.PushMsg"
-	CometServiceMPushMsg      = "RPC.MPushMsg"
-	CometServiceBroadcast     = "RPC.Broadcast"
+	CometServiceMPushMsg       = "RPC.MPushMsg"
+	CometServiceBroadcast      = "RPC.Broadcast"
 	CometServiceBroadcastTopic = "RPC.BroadcastTopic"
 )
 
@@ -29,29 +29,30 @@ const (
 //}
 
 type CometRpcClient struct {
-	Client	*rpc.Client
-	Quit		chan struct{}
-	Network	string
-	Addr		string
+	Client  *rpc.Client
+	Quit    chan struct{}
+	Network string
+	Addr    string
 }
+
 func (c *CometRpcClient) Close() {
 	c.Quit <- struct{}{}
 	c.Client.Close()
 }
 
 type CometRpc struct {
-	Config	ConfigComets
-	Clients	map[int32]*CometRpcClient
+	Config  ConfigComets
+	Clients map[int32]*CometRpcClient
 
-	PushChannels	[]chan *proto.MQMsg
+	PushChannels []chan *proto.MQMsg
 }
 
-func NewCometRpc() (*CometRpc) {
+func NewCometRpc() *CometRpc {
 	rpc := new(CometRpc)
 	return rpc
 }
 
-func (c *CometRpc)Init() (err error) {
+func (c *CometRpc) Init() (err error) {
 	conf := Conf.Comets
 	c.Clients = make(map[int32]*CometRpcClient)
 	for _, comet := range conf.Comet {
@@ -66,9 +67,9 @@ func (c *CometRpc)Init() (err error) {
 		go c.Keepalive(comet.Id, quit, comet.Network, comet.Addr)
 		log.Infof("connect to comet [%s@%s] successful.", comet.Network, comet.Addr)
 	}
-	
+
 	c.PushChannels = make([]chan *proto.MQMsg, conf.Push.ChannelSize)
-	for i := 0 ; i < len(c.PushChannels); i++ {
+	for i := 0; i < len(c.PushChannels); i++ {
 		c.PushChannels[i] = make(chan *proto.MQMsg, conf.Push.ChannelBufferSize)
 		go c.processPushMsg(c.PushChannels[i])
 	}
@@ -77,7 +78,7 @@ func (c *CometRpc)Init() (err error) {
 }
 
 func (c *CometRpc) UnInit() {
-	for i , cli := range c.Clients {
+	for i, cli := range c.Clients {
 		cli.Close()
 		delete(c.Clients, i)
 	}
@@ -90,19 +91,18 @@ func (c *CometRpc) UpdateConfig() {
 	err := c.Init()
 	if err != nil {
 		log.Fatalf("CometRpc.UpdateConfig failed : %v", err)
-		
+
 	}
 }
-
 
 // keep alive with comet servers
 func (c *CometRpc) Keepalive(cometId int32, quit chan struct{}, network, address string) {
 	var (
 		client *CometRpcClient
-		ok bool
+		ok     bool
 		err    error
 		call   *rpc.Call
-		done     = make(chan *rpc.Call, 1)
+		done   = make(chan *rpc.Call, 1)
 		args   = proto.NoREQ{}
 		reply  = proto.NoRES{}
 	)
@@ -110,24 +110,24 @@ func (c *CometRpc) Keepalive(cometId int32, quit chan struct{}, network, address
 		log.Errorf("keepalive : rpc connect to comet(id : %d) failed", cometId)
 		panic(ErrConnectComet)
 	}
-	
+
 	for {
 		select {
-			case <-quit:
-				return
-			default:
-				if client.Client != nil {
-					 call = <-client.Client.Go(CometServicePing, &args, &reply, done).Done
-					if call.Error != nil {
-						log.Errorf("rpc ping %s error(%v)", address, call.Error)
-					}
+		case <-quit:
+			return
+		default:
+			if client.Client != nil {
+				call = <-client.Client.Go(CometServicePing, &args, &reply, done).Done
+				if call.Error != nil {
+					log.Errorf("rpc ping %s error(%v)", address, call.Error)
 				}
-			
-				if client.Client == nil || (call != nil && call.Error == rpc.ErrShutdown)  {
-					if client.Client, err = rpc.Dial(network, address); err == nil {
-						// @TODO Dial other adminRpc server
-					}
+			}
+
+			if client.Client == nil || (call != nil && call.Error == rpc.ErrShutdown) {
+				if client.Client, err = rpc.Dial(network, address); err == nil {
+					// @TODO Dial other adminRpc server
 				}
+			}
 		}
 		time.Sleep(5 * time.Second)
 	}
@@ -141,8 +141,6 @@ func (c *CometRpc) getCometByServerId(serverId int32) (*CometRpcClient, error) {
 		return client, nil
 	}
 }
-
-
 
 //  push
 // does invalidate msg, if it is invalid, ignore it
@@ -163,45 +161,45 @@ func (c *CometRpc) push(msg *proto.MQMsg) {
 }
 
 func (c *CometRpc) processPushMsg(ch chan *proto.MQMsg) {
-	
+
 	for {
 		msg := <-ch
 		switch msg.OP {
-			case define.MQ_MESSAGE:
-				if len(msg.ServerId) == 1 {
-					pmsg := &proto.PushSMsgREQ{msg.ServerId[0], msg.Msg}
-					c.SPush(pmsg)
-				}
-			
-			case define.MQ_MESSAGE_MULTI:
-				if len(msg.ServerId) == 1 {
-					pmsg := &proto.PushMMsgREQ{msg.ServerId[0], msg.UserId, msg.Msg}
-					c.MPush(pmsg)
-				}
-				
-			case define.MQ_MESSAGE_BROADCAST:
-				pmsg := &proto.PushBroadcastREQ{msg.Msg}
-				c.broadcast(pmsg)
-				
-			case define.MQ_MESSAGE_BROADCAST_TOPIC:
-				pmsg := &proto.PushBroadcastTopicREQ{msg.Topic, msg.ServerId, msg.Msg}
-				c.broadcastTopic(pmsg)
-			default:
-				log.Errorf("unknown operation:%s", msg.OP)
+		case define.MQ_MESSAGE:
+			if len(msg.ServerId) == 1 {
+				pmsg := &proto.PushSMsgREQ{msg.ServerId[0], msg.Msg}
+				c.SPush(pmsg)
+			}
+
+		case define.MQ_MESSAGE_MULTI:
+			if len(msg.ServerId) == 1 {
+				pmsg := &proto.PushMMsgREQ{msg.ServerId[0], msg.UserId, msg.Msg}
+				c.MPush(pmsg)
+			}
+
+		case define.MQ_MESSAGE_BROADCAST:
+			pmsg := &proto.PushBroadcastREQ{msg.Msg}
+			c.broadcast(pmsg)
+
+		case define.MQ_MESSAGE_BROADCAST_TOPIC:
+			pmsg := &proto.PushBroadcastTopicREQ{Topic : msg.Topic, ServerId : msg.ServerId, Msg : msg.Msg}
+			c.broadcastTopic(pmsg)
+		default:
+			log.Errorf("unknown operation:%d", msg.OP)
 		}
 	}
 }
 
 func (c *CometRpc) SPush(msg *proto.PushSMsgREQ) {
-	
+
 	var (
 		reply = &proto.NoRES{}
-		cc     *CometRpcClient
+		cc    *CometRpcClient
 		err   error
 	)
 	cc, err = c.getCometByServerId(msg.ServerId)
-	
-	if err != nil  || cc  == nil  || cc.Client == nil {
+
+	if err != nil || cc == nil || cc.Client == nil {
 		log.Errorf("getCometByServerId(%d) failed : %v", msg.ServerId, err)
 		return
 	}
@@ -213,11 +211,11 @@ func (c *CometRpc) SPush(msg *proto.PushSMsgREQ) {
 func (c *CometRpc) MPush(msg *proto.PushMMsgREQ) {
 	var (
 		reply = &proto.NoRES{}
-		cc     *CometRpcClient
+		cc    *CometRpcClient
 		err   error
 	)
 	cc, err = c.getCometByServerId(msg.ServerId)
-	if err != nil  || cc  == nil  || cc.Client == nil {
+	if err != nil || cc == nil || cc.Client == nil {
 		log.Errorf("getCometByServerId(%d) failed : %v", msg.ServerId, err)
 		return
 	}
@@ -226,12 +224,11 @@ func (c *CometRpc) MPush(msg *proto.PushMMsgREQ) {
 	}
 }
 
-
 // ### broadcast : not guarantee message have been send successful
 
 // broadcast broadcast a message to all
-func  (c *CometRpc) broadcast(msg *proto.PushBroadcastREQ) {
-	
+func (c *CometRpc) broadcast(msg *proto.PushBroadcastREQ) {
+
 	for serverId, cc := range c.Clients {
 		if cc != nil {
 			go c.broadcastComet(cc, msg)
@@ -241,11 +238,10 @@ func  (c *CometRpc) broadcast(msg *proto.PushBroadcastREQ) {
 	}
 }
 
-
 // broadcastComet a message to specified comet
-func  (c *CometRpc) broadcastComet(cc *CometRpcClient, msg *proto.PushBroadcastREQ) (err error) {
+func (c *CometRpc) broadcastComet(cc *CometRpcClient, msg *proto.PushBroadcastREQ) (err error) {
 	var reply = proto.NoRES{}
-	if cc  == nil  || cc.Client == nil {
+	if cc == nil || cc.Client == nil {
 		log.Errorln("rpc client is nil")
 		return
 	}
@@ -256,17 +252,17 @@ func  (c *CometRpc) broadcastComet(cc *CometRpcClient, msg *proto.PushBroadcastR
 }
 
 // broadcast topic
-func  (c *CometRpc) broadcastTopic(msg *proto.PushBroadcastTopicREQ) {
+func (c *CometRpc) broadcastTopic(msg *proto.PushBroadcastTopicREQ) {
 	var (
 		reply = &proto.NoRES{}
-		cc     *CometRpcClient
+		cc    *CometRpcClient
 		err   error
 	)
-	
+
 	for _, server := range msg.ServerId {
 		go func(server int32) {
 			cc, err = c.getCometByServerId(server)
-			if err != nil  || cc  == nil  || cc.Client == nil {
+			if err != nil || cc == nil || cc.Client == nil {
 				log.Errorf("getCometByServerId(%d) failed : %v", msg.ServerId, err)
 				return
 			}
@@ -276,4 +272,3 @@ func  (c *CometRpc) broadcastTopic(msg *proto.PushBroadcastTopicREQ) {
 		}(server)
 	}
 }
-

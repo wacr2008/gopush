@@ -155,7 +155,7 @@ func (server *Server) serveTCP(conn *net.TCPConn, r int) {
 		ch.Ready()
 	}
 	if err != nil && err != io.EOF {
-		log.Errorf("userid: %s server tcp failed : %v", userid, err)
+		log.Errorf("userid: %d server tcp failed : %v", userid, err)
 	}
 	b.DelSafe(userid, ch)
 	tr.Del(trd)
@@ -167,7 +167,7 @@ func (server *Server) serveTCP(conn *net.TCPConn, r int) {
 		log.Errorf("unsub user(%d) failed : %v", userid, err)
 	}
 	if isDebug {
-		log.Debugf("userid: %s server tcp goroutine exit", userid)
+		log.Debugf("userid: %d server tcp goroutine exit", userid)
 	}
 	return
 }

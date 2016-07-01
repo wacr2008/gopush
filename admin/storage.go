@@ -136,7 +136,7 @@ func (r *RedisStorage) SaveMsg(msg *proto.PushMsg) (error) {
 	}
 	
 	// warning : maybe overflow
-	client.ZAdd(uid, redis.Z{float64(msg.Id), data})
+	client.ZAdd(uid, redis.Z{Score : float64(msg.Id), Member : data})
 	
 	return nil
 }
@@ -290,8 +290,6 @@ var data []byte
 	
 	
 	
-	
-	return failedUsers, nil
 }
 
 

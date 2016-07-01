@@ -20,7 +20,7 @@ func main() {
 	flag.Parse()
 	var err error
 	if err = InitConfig(); err != nil {
-		fmt.Sprintf("init configuration failed : %v", err)
+		fmt.Printf("init configuration failed : %v", err)
 		panic(err)
 	}
 	fmt.Println("init config successful.")

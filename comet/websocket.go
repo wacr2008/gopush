@@ -18,13 +18,12 @@ import (
 
 func (server *Server) InitWebsocket() (err error) {
 	var (
-		bind         string
 		listener     *net.TCPListener
 		addr         *net.TCPAddr
 		httpServeMux = http.NewServeMux()
 	)
 	httpServeMux.Handle("/subscribe", websocket.Handler(server.subscribeWS))
-	for _, bind = range server.Config.WebSocket.Bind {
+	for _, bind := range server.Config.WebSocket.Bind {
 		if addr, err = net.ResolveTCPAddr("tcp4", bind); err != nil {
 			log.Errorf("net.ResolveTCPAddr(tcp4, %s) failed : %v", bind, err)
 			return
@@ -36,12 +35,12 @@ func (server *Server) InitWebsocket() (err error) {
 		httpserver := &http.Server{Handler: httpServeMux}
 		log.Infof("comet server start websocket listen: %s", bind)
 
-		go func() {
+		go func(bind string) {
 			if err = httpserver.Serve(listener); err != nil {
 				log.Errorf("httpserver.Serve(%s) failed : %v", bind, err)
 				panic(err)
 			}
-		}()
+		}(bind)
 	}
 	return
 }
@@ -61,7 +60,7 @@ func (server *Server) InitTlsWebsocket(addrs []string, cert, priv string) (err e
 		server.SetKeepAlivesEnabled(true)
 		log.Infof("comet server start websocket TLS listen: %s", bind)
 
-		go func() {
+		go func(bind string) {
 			ln, err := net.Listen("tcp", bind)
 			if err != nil {
 				return
@@ -72,7 +71,7 @@ func (server *Server) InitTlsWebsocket(addrs []string, cert, priv string) (err e
 				log.Errorf("server.Serve(%s) failed : %v", bind, err)
 				return
 			}
-		}()
+		}(bind)
 	}
 	return
 }
