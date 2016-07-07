@@ -33,6 +33,7 @@ func WaitSignal() {
 			for e := datas.ExitFuncs.Front(); e != nil ; e = e.Next() {
 				e.Value.(Func)()
 			}
+			os.Exit(0)
 			return
 		case syscall.SIGHUP:
 			for e := datas.ReloadFuncs.Front(); e != nil ; e = e.Next() {
