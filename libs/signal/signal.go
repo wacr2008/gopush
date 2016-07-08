@@ -25,11 +25,11 @@ func init() {
 
 func WaitSignal() {
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT, syscall.SIGSTOP)
+	signal.Notify(c, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
 	for {
 		s := <-c
 		switch s {
-		case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGSTOP, syscall.SIGINT:
+		case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT:
 			for e := datas.ExitFuncs.Front(); e != nil ; e = e.Next() {
 				e.Value.(Func)()
 			}
