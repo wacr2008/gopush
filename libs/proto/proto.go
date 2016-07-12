@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 	"golang.org/x/net/websocket"
-	"gopush/libs/bufio"
-	"gopush/libs/define"
-	"gopush/libs/encoding/binary"
+	"github.com/ikenchina/gopush/libs/bufio"
+	"github.com/ikenchina/gopush/libs/define"
+	"github.com/ikenchina/gopush/libs/encoding/binary"
 )
 
 

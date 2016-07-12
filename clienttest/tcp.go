@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"net"
 	"time"
-	. "gopush/libs/define"
+	. "github.com/ikenchina/gopush/libs/define"
 	log "github.com/ikenchina/golog"
 )
 

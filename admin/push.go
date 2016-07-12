@@ -2,7 +2,7 @@ package main
 
 import (
 	"time"
-	"gopush/libs/proto"
+	"github.com/ikenchina/gopush/libs/proto"
 	//log "github.com/ikenchina/golog"
 )
 

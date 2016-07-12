@@ -6,7 +6,7 @@ import (
 	"strconv"
 	log "github.com/ikenchina/golog"
 	"github.com/stathat/consistent"
-	"gopush/libs/proto"
+	"github.com/ikenchina/gopush/libs/proto"
 )
 
 var (

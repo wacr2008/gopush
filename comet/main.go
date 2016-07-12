@@ -6,8 +6,8 @@ import (
 	"fmt"
 	
 	log "github.com/ikenchina/golog"
-	"gopush/libs/signal"
-	"gopush/libs/perf"
+	"github.com/ikenchina/gopush/libs/signal"
+	"github.com/ikenchina/gopush/libs/perf"
 )
 
 

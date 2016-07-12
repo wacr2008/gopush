@@ -7,8 +7,8 @@ import (
 	"net/rpc"
 	"time"
 
-	"gopush/libs/define"
-	"gopush/libs/proto"
+	"github.com/ikenchina/gopush/libs/define"
+	"github.com/ikenchina/gopush/libs/proto"
 )
 
 const (

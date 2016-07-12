@@ -10,9 +10,9 @@ import (
 	log "github.com/ikenchina/golog"
 	"golang.org/x/net/websocket"
 	
-	"gopush/libs/define"
-	"gopush/libs/proto"
-	itime "gopush/libs/time"
+	"github.com/ikenchina/gopush/libs/define"
+	"github.com/ikenchina/gopush/libs/proto"
+	itime "github.com/ikenchina/gopush/libs/time"
 	
 )
 

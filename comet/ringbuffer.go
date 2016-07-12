@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gopush/libs/proto"
+	"github.com/ikenchina/gopush/libs/proto"
 )
 
 // ref : 

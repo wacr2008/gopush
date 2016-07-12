@@ -5,8 +5,8 @@ import (
 	"runtime"
 	"fmt"
 	log "github.com/ikenchina/golog"
-	"gopush/libs/perf"
-	"gopush/libs/signal"
+	"github.com/ikenchina/gopush/libs/perf"
+	"github.com/ikenchina/gopush/libs/signal"
 )
 
 var(

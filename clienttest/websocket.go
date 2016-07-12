@@ -2,7 +2,7 @@ package main
 
 import (
 	"time"
-	. "gopush/libs/define"
+	. "github.com/ikenchina/gopush/libs/define"
 	log "github.com/ikenchina/golog"
 	"golang.org/x/net/websocket"
 	"fmt"

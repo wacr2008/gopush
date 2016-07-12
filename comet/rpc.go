@@ -5,8 +5,8 @@ import (
 	"net/rpc"
 	"time"
 	log "github.com/ikenchina/golog"
-	"gopush/libs/proto"
-	"gopush/libs/define"
+	"github.com/ikenchina/gopush/libs/proto"
+	"github.com/ikenchina/gopush/libs/define"
 )
 
 func InitRPC() (err error) {

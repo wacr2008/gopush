@@ -6,8 +6,8 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/Shopify/sarama"
 	log "github.com/ikenchina/golog"
-	"gopush/libs/define"
-	"gopush/libs/proto"
+	"github.com/ikenchina/gopush/libs/define"
+	"github.com/ikenchina/gopush/libs/proto"
 )
 
 var (

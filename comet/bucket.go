@@ -2,7 +2,7 @@ package main
 
 import (
 	"sync"
-	"gopush/libs/proto"
+	"github.com/ikenchina/gopush/libs/proto"
 )
 
 

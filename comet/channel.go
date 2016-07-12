@@ -1,8 +1,8 @@
 package main
 
 import (
-	"gopush/libs/bufio"
-	"gopush/libs/proto"
+	"github.com/ikenchina/gopush/libs/bufio"
+	"github.com/ikenchina/gopush/libs/proto"
 )
 
 // Channel : manage user information

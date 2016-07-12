@@ -8,11 +8,11 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 	log "github.com/ikenchina/golog"
 	
-	"gopush/libs/bufio"
-	"gopush/libs/bytes"
-	"gopush/libs/define"
-	"gopush/libs/proto"
-	itime "gopush/libs/time"
+	"github.com/ikenchina/gopush/libs/bufio"
+	"github.com/ikenchina/gopush/libs/bytes"
+	"github.com/ikenchina/gopush/libs/define"
+	"github.com/ikenchina/gopush/libs/proto"
+	itime "github.com/ikenchina/gopush/libs/time"
 )
 
 

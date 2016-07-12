@@ -4,7 +4,7 @@ import (
 	"net/rpc"
 	"time"
 	log "github.com/ikenchina/golog"
-	"gopush/libs/proto"
+	"github.com/ikenchina/gopush/libs/proto"
 )
 
 var (

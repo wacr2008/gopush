@@ -1,8 +1,8 @@
 package main
 
 import (
-	"gopush/libs/bytes"
-	"gopush/libs/time"
+	"github.com/ikenchina/gopush/libs/bytes"
+	"github.com/ikenchina/gopush/libs/time"
 )
 
 type RoundRobinOptions struct {

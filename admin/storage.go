@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"gopkg.in/redis.v3"
 	"github.com/stathat/consistent"
-	"gopush/libs/proto"
+	"github.com/ikenchina/gopush/libs/proto"
 	"github.com/pquerna/ffjson/ffjson"
-	"gopush/libs/nocopy"
+	"github.com/ikenchina/gopush/libs/nocopy"
 	log "github.com/ikenchina/golog"
 )
 
