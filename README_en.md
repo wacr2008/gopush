@@ -22,7 +22,8 @@ supports multiple protocols(tcp or websocket, @TODO(udp))
  * comet : change protocol of beartbeat and notification to udp protocol, change protocol of message to tcp or websocket
  * protocol : MQTT
 
-
+## contribution
+refer to https://github.com/Terry-Mao/goim
 
 ## install
 ### 一、dependencies
