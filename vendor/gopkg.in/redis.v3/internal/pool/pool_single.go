@@ -12,16 +12,12 @@ func NewSingleConnPool(cn *Conn) *SingleConnPool {
 	}
 }
 
-func (p *SingleConnPool) NewConn() (*Conn, error) {
-	panic("not implemented")
+func (p *SingleConnPool) First() *Conn {
+	return p.cn
 }
 
-func (p *SingleConnPool) CloseConn(*Conn) error {
-	panic("not implemented")
-}
-
-func (p *SingleConnPool) Get() (*Conn, bool, error) {
-	return p.cn, false, nil
+func (p *SingleConnPool) Get() (*Conn, error) {
+	return p.cn, nil
 }
 
 func (p *SingleConnPool) Put(cn *Conn) error {
@@ -31,7 +27,7 @@ func (p *SingleConnPool) Put(cn *Conn) error {
 	return nil
 }
 
-func (p *SingleConnPool) Remove(cn *Conn) error {
+func (p *SingleConnPool) Remove(cn *Conn, _ error) error {
 	if p.cn != cn {
 		panic("p.cn != cn")
 	}
@@ -46,10 +42,14 @@ func (p *SingleConnPool) FreeLen() int {
 	return 0
 }
 
-func (p *SingleConnPool) Stats() *Stats {
+func (p *SingleConnPool) Stats() *PoolStats {
 	return nil
 }
 
 func (p *SingleConnPool) Close() error {
 	return nil
+}
+
+func (p *SingleConnPool) Closed() bool {
+	return false
 }

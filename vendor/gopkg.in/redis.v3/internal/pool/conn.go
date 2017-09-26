@@ -1,78 +1,78 @@
 package pool
 
 import (
+	"bufio"
+	"io"
 	"net"
-	"sync/atomic"
 	"time"
-
-	"github.com/go-redis/redis/internal/proto"
 )
+
+const defaultBufSize = 4096
 
 var noDeadline = time.Time{}
 
 type Conn struct {
-	netConn net.Conn
-
-	Rd *proto.Reader
-	Wb *proto.WriteBuffer
+	NetConn net.Conn
+	Rd      *bufio.Reader
+	Buf     []byte
 
 	Inited bool
-	usedAt atomic.Value
+	UsedAt time.Time
+
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
 }
 
 func NewConn(netConn net.Conn) *Conn {
 	cn := &Conn{
-		netConn: netConn,
-		Wb:      proto.NewWriteBuffer(),
+		NetConn: netConn,
+		Buf:     make([]byte, defaultBufSize),
+
+		UsedAt: time.Now(),
 	}
-	cn.Rd = proto.NewReader(cn.netConn)
-	cn.SetUsedAt(time.Now())
+	cn.Rd = bufio.NewReader(cn)
 	return cn
 }
 
-func (cn *Conn) UsedAt() time.Time {
-	return cn.usedAt.Load().(time.Time)
-}
-
-func (cn *Conn) SetUsedAt(tm time.Time) {
-	cn.usedAt.Store(tm)
-}
-
-func (cn *Conn) SetNetConn(netConn net.Conn) {
-	cn.netConn = netConn
-	cn.Rd.Reset(netConn)
-}
-
 func (cn *Conn) IsStale(timeout time.Duration) bool {
-	return timeout > 0 && time.Since(cn.UsedAt()) > timeout
+	return timeout > 0 && time.Since(cn.UsedAt) > timeout
 }
 
-func (cn *Conn) SetReadTimeout(timeout time.Duration) error {
-	now := time.Now()
-	cn.SetUsedAt(now)
-	if timeout > 0 {
-		return cn.netConn.SetReadDeadline(now.Add(timeout))
+func (cn *Conn) Read(b []byte) (int, error) {
+	cn.UsedAt = time.Now()
+	if cn.ReadTimeout != 0 {
+		cn.NetConn.SetReadDeadline(cn.UsedAt.Add(cn.ReadTimeout))
+	} else {
+		cn.NetConn.SetReadDeadline(noDeadline)
 	}
-	return cn.netConn.SetReadDeadline(noDeadline)
-}
-
-func (cn *Conn) SetWriteTimeout(timeout time.Duration) error {
-	now := time.Now()
-	cn.SetUsedAt(now)
-	if timeout > 0 {
-		return cn.netConn.SetWriteDeadline(now.Add(timeout))
-	}
-	return cn.netConn.SetWriteDeadline(noDeadline)
+	return cn.NetConn.Read(b)
 }
 
 func (cn *Conn) Write(b []byte) (int, error) {
-	return cn.netConn.Write(b)
+	cn.UsedAt = time.Now()
+	if cn.WriteTimeout != 0 {
+		cn.NetConn.SetWriteDeadline(cn.UsedAt.Add(cn.WriteTimeout))
+	} else {
+		cn.NetConn.SetWriteDeadline(noDeadline)
+	}
+	return cn.NetConn.Write(b)
 }
 
 func (cn *Conn) RemoteAddr() net.Addr {
-	return cn.netConn.RemoteAddr()
+	return cn.NetConn.RemoteAddr()
+}
+
+func (cn *Conn) ReadN(n int) ([]byte, error) {
+	if d := n - cap(cn.Buf); d > 0 {
+		cn.Buf = cn.Buf[:cap(cn.Buf)]
+		cn.Buf = append(cn.Buf, make([]byte, d)...)
+	} else {
+		cn.Buf = cn.Buf[:n]
+	}
+	_, err := io.ReadFull(cn.Rd, cn.Buf)
+	return cn.Buf, err
 }
 
 func (cn *Conn) Close() error {
-	return cn.netConn.Close()
+	return cn.NetConn.Close()
 }

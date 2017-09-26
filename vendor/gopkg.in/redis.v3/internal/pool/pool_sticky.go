@@ -1,6 +1,9 @@
 package pool
 
-import "sync"
+import (
+	"errors"
+	"sync"
+)
 
 type StickyConnPool struct {
 	pool     *ConnPool
@@ -8,7 +11,7 @@ type StickyConnPool struct {
 
 	cn     *Conn
 	closed bool
-	mu     sync.Mutex
+	mx     sync.Mutex
 }
 
 var _ Pooler = (*StickyConnPool)(nil)
@@ -20,69 +23,74 @@ func NewStickyConnPool(pool *ConnPool, reusable bool) *StickyConnPool {
 	}
 }
 
-func (p *StickyConnPool) NewConn() (*Conn, error) {
-	panic("not implemented")
+func (p *StickyConnPool) First() *Conn {
+	p.mx.Lock()
+	cn := p.cn
+	p.mx.Unlock()
+	return cn
 }
 
-func (p *StickyConnPool) CloseConn(*Conn) error {
-	panic("not implemented")
-}
-
-func (p *StickyConnPool) Get() (*Conn, bool, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
+func (p *StickyConnPool) Get() (*Conn, error) {
+	defer p.mx.Unlock()
+	p.mx.Lock()
 
 	if p.closed {
-		return nil, false, ErrClosed
+		return nil, ErrClosed
 	}
 	if p.cn != nil {
-		return p.cn, false, nil
+		return p.cn, nil
 	}
 
-	cn, _, err := p.pool.Get()
+	cn, err := p.pool.Get()
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 	p.cn = cn
-	return cn, true, nil
+	return cn, nil
 }
 
-func (p *StickyConnPool) putUpstream() (err error) {
+func (p *StickyConnPool) put() (err error) {
 	err = p.pool.Put(p.cn)
 	p.cn = nil
 	return err
 }
 
 func (p *StickyConnPool) Put(cn *Conn) error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
+	defer p.mx.Unlock()
+	p.mx.Lock()
 	if p.closed {
 		return ErrClosed
+	}
+	if p.cn != cn {
+		panic("p.cn != cn")
 	}
 	return nil
 }
 
-func (p *StickyConnPool) removeUpstream() error {
-	err := p.pool.Remove(p.cn)
+func (p *StickyConnPool) remove(reason error) error {
+	err := p.pool.Remove(p.cn, reason)
 	p.cn = nil
 	return err
 }
 
-func (p *StickyConnPool) Remove(cn *Conn) error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
+func (p *StickyConnPool) Remove(cn *Conn, reason error) error {
+	defer p.mx.Unlock()
+	p.mx.Lock()
 	if p.closed {
 		return nil
 	}
-	return p.removeUpstream()
+	if p.cn == nil {
+		panic("p.cn == nil")
+	}
+	if cn != nil && p.cn != cn {
+		panic("p.cn != cn")
+	}
+	return p.remove(reason)
 }
 
 func (p *StickyConnPool) Len() int {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
+	defer p.mx.Unlock()
+	p.mx.Lock()
 	if p.cn == nil {
 		return 0
 	}
@@ -90,23 +98,19 @@ func (p *StickyConnPool) Len() int {
 }
 
 func (p *StickyConnPool) FreeLen() int {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
+	defer p.mx.Unlock()
+	p.mx.Lock()
 	if p.cn == nil {
 		return 1
 	}
 	return 0
 }
 
-func (p *StickyConnPool) Stats() *Stats {
-	return nil
-}
+func (p *StickyConnPool) Stats() *PoolStats { return nil }
 
 func (p *StickyConnPool) Close() error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
+	defer p.mx.Unlock()
+	p.mx.Lock()
 	if p.closed {
 		return ErrClosed
 	}
@@ -114,10 +118,18 @@ func (p *StickyConnPool) Close() error {
 	var err error
 	if p.cn != nil {
 		if p.reusable {
-			err = p.putUpstream()
+			err = p.put()
 		} else {
-			err = p.removeUpstream()
+			reason := errors.New("redis: sticky not reusable connection")
+			err = p.remove(reason)
 		}
 	}
 	return err
+}
+
+func (p *StickyConnPool) Closed() bool {
+	p.mx.Lock()
+	closed := p.closed
+	p.mx.Unlock()
+	return closed
 }

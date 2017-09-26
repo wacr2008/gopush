@@ -1,33 +1,33 @@
 package redis_test
 
 import (
-	"github.com/go-redis/redis"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"gopkg.in/redis.v3"
 )
 
-var _ = Describe("Cmd", func() {
+var _ = Describe("Command", func() {
 	var client *redis.Client
 
 	BeforeEach(func() {
 		client = redis.NewClient(redisOptions())
-		Expect(client.FlushDB().Err()).NotTo(HaveOccurred())
+		Expect(client.FlushDb().Err()).NotTo(HaveOccurred())
 	})
 
 	AfterEach(func() {
 		Expect(client.Close()).NotTo(HaveOccurred())
 	})
 
-	It("implements Stringer", func() {
+	It("should implement Stringer", func() {
 		set := client.Set("foo", "bar", 0)
-		Expect(set.String()).To(Equal("set foo bar: OK"))
+		Expect(set.String()).To(Equal("SET foo bar: OK"))
 
 		get := client.Get("foo")
-		Expect(get.String()).To(Equal("get foo: bar"))
+		Expect(get.String()).To(Equal("GET foo: bar"))
 	})
 
-	It("has val/err", func() {
+	It("should have correct val/err states", func() {
 		set := client.Set("key", "hello", 0)
 		Expect(set.Err()).NotTo(HaveOccurred())
 		Expect(set.Val()).To(Equal("OK"))
@@ -40,7 +40,7 @@ var _ = Describe("Cmd", func() {
 		Expect(set.Val()).To(Equal("OK"))
 	})
 
-	It("has helpers", func() {
+	It("should convert strings via helpers", func() {
 		set := client.Set("key", "10", 0)
 		Expect(set.Err()).NotTo(HaveOccurred())
 

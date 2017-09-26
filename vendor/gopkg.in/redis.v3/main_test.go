@@ -2,7 +2,6 @@ package redis_test
 
 import (
 	"errors"
-	"fmt"
 	"net"
 	"os"
 	"os/exec"
@@ -12,10 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-redis/redis"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"gopkg.in/redis.v3"
 )
 
 const (
@@ -95,7 +94,7 @@ var _ = AfterSuite(func() {
 
 func TestGinkgoSuite(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "go-redis")
+	RunSpecs(t, "gopkg.in/redis.v3")
 }
 
 //------------------------------------------------------------------------------
@@ -109,36 +108,8 @@ func redisOptions() *redis.Options {
 		WriteTimeout:       30 * time.Second,
 		PoolSize:           10,
 		PoolTimeout:        30 * time.Second,
-		IdleTimeout:        500 * time.Millisecond,
-		IdleCheckFrequency: 500 * time.Millisecond,
-	}
-}
-
-func redisClusterOptions() *redis.ClusterOptions {
-	return &redis.ClusterOptions{
-		DialTimeout:        10 * time.Second,
-		ReadTimeout:        30 * time.Second,
-		WriteTimeout:       30 * time.Second,
-		PoolSize:           10,
-		PoolTimeout:        30 * time.Second,
-		IdleTimeout:        500 * time.Millisecond,
-		IdleCheckFrequency: 500 * time.Millisecond,
-	}
-}
-
-func redisRingOptions() *redis.RingOptions {
-	return &redis.RingOptions{
-		Addrs: map[string]string{
-			"ringShardOne": ":" + ringShard1Port,
-			"ringShardTwo": ":" + ringShard2Port,
-		},
-		DialTimeout:        10 * time.Second,
-		ReadTimeout:        30 * time.Second,
-		WriteTimeout:       30 * time.Second,
-		PoolSize:           10,
-		PoolTimeout:        30 * time.Second,
-		IdleTimeout:        500 * time.Millisecond,
-		IdleCheckFrequency: 500 * time.Millisecond,
+		IdleTimeout:        time.Second,
+		IdleCheckFrequency: time.Second,
 	}
 }
 
@@ -160,22 +131,20 @@ func perform(n int, cbs ...func(int)) {
 
 func eventually(fn func() error, timeout time.Duration) error {
 	var exit int32
-	errCh := make(chan error)
+	var retErr error
+	var mu sync.Mutex
 	done := make(chan struct{})
 
 	go func() {
-		defer GinkgoRecover()
-
 		for atomic.LoadInt32(&exit) == 0 {
 			err := fn()
 			if err == nil {
 				close(done)
 				return
 			}
-			select {
-			case errCh <- err:
-			default:
-			}
+			mu.Lock()
+			retErr = err
+			mu.Unlock()
 			time.Sleep(timeout / 100)
 		}
 	}()
@@ -185,12 +154,10 @@ func eventually(fn func() error, timeout time.Duration) error {
 		return nil
 	case <-time.After(timeout):
 		atomic.StoreInt32(&exit, 1)
-		select {
-		case err := <-errCh:
-			return err
-		default:
-			return fmt.Errorf("timeout after %s", timeout)
-		}
+		mu.Lock()
+		err := retErr
+		mu.Unlock()
+		return err
 	}
 }
 

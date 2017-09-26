@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-redis/redis"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"gopkg.in/redis.v3"
 )
 
 var _ = Describe("PubSub", func() {
@@ -17,7 +17,7 @@ var _ = Describe("PubSub", func() {
 
 	BeforeEach(func() {
 		client = redis.NewClient(redisOptions())
-		Expect(client.FlushDB().Err()).NotTo(HaveOccurred())
+		Expect(client.FlushDb().Err()).NotTo(HaveOccurred())
 	})
 
 	AfterEach(func() {
@@ -25,7 +25,8 @@ var _ = Describe("PubSub", func() {
 	})
 
 	It("should support pattern matching", func() {
-		pubsub := client.PSubscribe("mychannel*")
+		pubsub, err := client.PSubscribe("mychannel*")
+		Expect(err).NotTo(HaveOccurred())
 		defer pubsub.Close()
 
 		{
@@ -52,7 +53,7 @@ var _ = Describe("PubSub", func() {
 		{
 			msgi, err := pubsub.ReceiveTimeout(time.Second)
 			Expect(err).NotTo(HaveOccurred())
-			subscr := msgi.(*redis.Message)
+			subscr := msgi.(*redis.PMessage)
 			Expect(subscr.Channel).To(Equal("mychannel1"))
 			Expect(subscr.Pattern).To(Equal("mychannel*"))
 			Expect(subscr.Payload).To(Equal("hello"))
@@ -68,7 +69,7 @@ var _ = Describe("PubSub", func() {
 		}
 
 		stats := client.PoolStats()
-		Expect(stats.Misses).To(Equal(uint32(2)))
+		Expect(stats.Requests - stats.Hits - stats.Waits).To(Equal(uint32(2)))
 	})
 
 	It("should pub/sub channels", func() {
@@ -76,7 +77,8 @@ var _ = Describe("PubSub", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(channels).To(BeEmpty())
 
-		pubsub := client.Subscribe("mychannel", "mychannel2")
+		pubsub, err := client.Subscribe("mychannel", "mychannel2")
+		Expect(err).NotTo(HaveOccurred())
 		defer pubsub.Close()
 
 		channels, err = client.PubSubChannels("mychannel*").Result()
@@ -93,7 +95,8 @@ var _ = Describe("PubSub", func() {
 	})
 
 	It("should return the numbers of subscribers", func() {
-		pubsub := client.Subscribe("mychannel", "mychannel2")
+		pubsub, err := client.Subscribe("mychannel", "mychannel2")
+		Expect(err).NotTo(HaveOccurred())
 		defer pubsub.Close()
 
 		channels, err := client.PubSubNumSub("mychannel", "mychannel2", "mychannel3").Result()
@@ -110,7 +113,8 @@ var _ = Describe("PubSub", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(num).To(Equal(int64(0)))
 
-		pubsub := client.PSubscribe("*")
+		pubsub, err := client.PSubscribe("*")
+		Expect(err).NotTo(HaveOccurred())
 		defer pubsub.Close()
 
 		num, err = client.PubSubNumPat().Result()
@@ -119,7 +123,8 @@ var _ = Describe("PubSub", func() {
 	})
 
 	It("should pub/sub", func() {
-		pubsub := client.Subscribe("mychannel", "mychannel2")
+		pubsub, err := client.Subscribe("mychannel", "mychannel2")
+		Expect(err).NotTo(HaveOccurred())
 		defer pubsub.Close()
 
 		{
@@ -159,9 +164,9 @@ var _ = Describe("PubSub", func() {
 		{
 			msgi, err := pubsub.ReceiveTimeout(time.Second)
 			Expect(err).NotTo(HaveOccurred())
-			msg := msgi.(*redis.Message)
-			Expect(msg.Channel).To(Equal("mychannel"))
-			Expect(msg.Payload).To(Equal("hello"))
+			subscr := msgi.(*redis.Message)
+			Expect(subscr.Channel).To(Equal("mychannel"))
+			Expect(subscr.Payload).To(Equal("hello"))
 		}
 
 		{
@@ -191,14 +196,15 @@ var _ = Describe("PubSub", func() {
 		}
 
 		stats := client.PoolStats()
-		Expect(stats.Misses).To(Equal(uint32(2)))
+		Expect(stats.Requests - stats.Hits - stats.Waits).To(Equal(uint32(2)))
 	})
 
 	It("should ping/pong", func() {
-		pubsub := client.Subscribe("mychannel")
+		pubsub, err := client.Subscribe("mychannel")
+		Expect(err).NotTo(HaveOccurred())
 		defer pubsub.Close()
 
-		_, err := pubsub.ReceiveTimeout(time.Second)
+		_, err = pubsub.ReceiveTimeout(time.Second)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = pubsub.Ping("")
@@ -211,10 +217,11 @@ var _ = Describe("PubSub", func() {
 	})
 
 	It("should ping/pong with payload", func() {
-		pubsub := client.Subscribe("mychannel")
+		pubsub, err := client.Subscribe("mychannel")
+		Expect(err).NotTo(HaveOccurred())
 		defer pubsub.Close()
 
-		_, err := pubsub.ReceiveTimeout(time.Second)
+		_, err = pubsub.ReceiveTimeout(time.Second)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = pubsub.Ping("hello")
@@ -227,16 +234,9 @@ var _ = Describe("PubSub", func() {
 	})
 
 	It("should multi-ReceiveMessage", func() {
-		pubsub := client.Subscribe("mychannel")
-		defer pubsub.Close()
-
-		subscr, err := pubsub.ReceiveTimeout(time.Second)
+		pubsub, err := client.Subscribe("mychannel")
 		Expect(err).NotTo(HaveOccurred())
-		Expect(subscr).To(Equal(&redis.Subscription{
-			Kind:    "subscribe",
-			Channel: "mychannel",
-			Count:   1,
-		}))
+		defer pubsub.Close()
 
 		err = client.Publish("mychannel", "hello").Err()
 		Expect(err).NotTo(HaveOccurred())
@@ -258,16 +258,9 @@ var _ = Describe("PubSub", func() {
 	It("should ReceiveMessage after timeout", func() {
 		timeout := 100 * time.Millisecond
 
-		pubsub := client.Subscribe("mychannel")
-		defer pubsub.Close()
-
-		subscr, err := pubsub.ReceiveTimeout(time.Second)
+		pubsub, err := client.Subscribe("mychannel")
 		Expect(err).NotTo(HaveOccurred())
-		Expect(subscr).To(Equal(&redis.Subscription{
-			Kind:    "subscribe",
-			Channel: "mychannel",
-			Count:   1,
-		}))
+		defer pubsub.Close()
 
 		done := make(chan bool, 1)
 		go func() {
@@ -290,31 +283,17 @@ var _ = Describe("PubSub", func() {
 		Eventually(done).Should(Receive())
 
 		stats := client.PoolStats()
+		Expect(stats.Requests).To(Equal(uint32(3)))
 		Expect(stats.Hits).To(Equal(uint32(1)))
-		Expect(stats.Misses).To(Equal(uint32(1)))
-	})
-
-	It("returns an error when subscribe fails", func() {
-		pubsub := client.Subscribe()
-		defer pubsub.Close()
-
-		pubsub.SetNetConn(&badConn{
-			readErr:  io.EOF,
-			writeErr: io.EOF,
-		})
-
-		err := pubsub.Subscribe("mychannel")
-		Expect(err).To(MatchError("EOF"))
-
-		err = pubsub.Subscribe("mychannel")
-		Expect(err).NotTo(HaveOccurred())
 	})
 
 	expectReceiveMessageOnError := func(pubsub *redis.PubSub) {
-		pubsub.SetNetConn(&badConn{
+		cn1, err := pubsub.Pool().Get()
+		Expect(err).NotTo(HaveOccurred())
+		cn1.NetConn = &badConn{
 			readErr:  io.EOF,
 			writeErr: io.EOF,
-		})
+		}
 
 		done := make(chan bool, 1)
 		go func() {
@@ -334,40 +313,31 @@ var _ = Describe("PubSub", func() {
 		Expect(msg.Payload).To(Equal("hello"))
 
 		Eventually(done).Should(Receive())
+
+		stats := client.PoolStats()
+		Expect(stats.Requests).To(Equal(uint32(4)))
+		Expect(stats.Hits).To(Equal(uint32(1)))
 	}
 
 	It("Subscribe should reconnect on ReceiveMessage error", func() {
-		pubsub := client.Subscribe("mychannel")
-		defer pubsub.Close()
-
-		subscr, err := pubsub.ReceiveTimeout(time.Second)
+		pubsub, err := client.Subscribe("mychannel")
 		Expect(err).NotTo(HaveOccurred())
-		Expect(subscr).To(Equal(&redis.Subscription{
-			Kind:    "subscribe",
-			Channel: "mychannel",
-			Count:   1,
-		}))
+		defer pubsub.Close()
 
 		expectReceiveMessageOnError(pubsub)
 	})
 
 	It("PSubscribe should reconnect on ReceiveMessage error", func() {
-		pubsub := client.PSubscribe("mychannel")
-		defer pubsub.Close()
-
-		subscr, err := pubsub.ReceiveTimeout(time.Second)
+		pubsub, err := client.PSubscribe("mychannel")
 		Expect(err).NotTo(HaveOccurred())
-		Expect(subscr).To(Equal(&redis.Subscription{
-			Kind:    "psubscribe",
-			Channel: "mychannel",
-			Count:   1,
-		}))
+		defer pubsub.Close()
 
 		expectReceiveMessageOnError(pubsub)
 	})
 
 	It("should return on Close", func() {
-		pubsub := client.Subscribe("mychannel")
+		pubsub, err := client.Subscribe("mychannel")
+		Expect(err).NotTo(HaveOccurred())
 		defer pubsub.Close()
 
 		var wg sync.WaitGroup
@@ -376,52 +346,20 @@ var _ = Describe("PubSub", func() {
 			defer GinkgoRecover()
 
 			wg.Done()
-			defer wg.Done()
 
 			_, err := pubsub.ReceiveMessage()
-			Expect(err).To(HaveOccurred())
-			Expect(err).To(SatisfyAny(
-				MatchError("redis: client is closed"),
-				MatchError("use of closed network connection"), // Go 1.4
-			))
+			Expect(err).To(MatchError("redis: client is closed"))
+
+			wg.Done()
 		}()
 
 		wg.Wait()
 		wg.Add(1)
 
-		Expect(pubsub.Close()).NotTo(HaveOccurred())
-
-		wg.Wait()
-	})
-
-	It("should ReceiveMessage without a subscription", func() {
-		timeout := 100 * time.Millisecond
-
-		pubsub := client.Subscribe()
-		defer pubsub.Close()
-
-		var wg sync.WaitGroup
-		wg.Add(1)
-		go func() {
-			defer GinkgoRecover()
-			defer wg.Done()
-
-			time.Sleep(2 * timeout)
-
-			err := pubsub.Subscribe("mychannel")
-			Expect(err).NotTo(HaveOccurred())
-
-			time.Sleep(timeout)
-
-			err = client.Publish("mychannel", "hello").Err()
-			Expect(err).NotTo(HaveOccurred())
-		}()
-
-		msg, err := pubsub.ReceiveMessageTimeout(timeout)
+		err = pubsub.Close()
 		Expect(err).NotTo(HaveOccurred())
-		Expect(msg.Channel).To(Equal("mychannel"))
-		Expect(msg.Payload).To(Equal("hello"))
 
 		wg.Wait()
 	})
+
 })

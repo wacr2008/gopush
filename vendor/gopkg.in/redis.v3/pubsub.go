@@ -3,80 +3,60 @@ package redis
 import (
 	"fmt"
 	"net"
-	"sync"
 	"time"
 
-	"github.com/go-redis/redis/internal"
-	"github.com/go-redis/redis/internal/pool"
+	"gopkg.in/redis.v3/internal"
+	"gopkg.in/redis.v3/internal/pool"
 )
+
+// Posts a message to the given channel.
+func (c *Client) Publish(channel, message string) *IntCmd {
+	req := NewIntCmd("PUBLISH", channel, message)
+	c.Process(req)
+	return req
+}
 
 // PubSub implements Pub/Sub commands as described in
 // http://redis.io/topics/pubsub. It's NOT safe for concurrent use by
 // multiple goroutines.
-//
-// PubSub automatically resubscribes to the channels and patterns
-// when Redis becomes unavailable.
 type PubSub struct {
-	opt *Options
+	base *baseClient
 
-	newConn   func([]string) (*pool.Conn, error)
-	closeConn func(*pool.Conn) error
-
-	mu       sync.Mutex
-	cn       *pool.Conn
 	channels []string
 	patterns []string
-	closed   bool
 
-	cmd *Cmd
+	nsub int // number of active subscriptions
 }
 
-func (c *PubSub) conn() (*pool.Conn, error) {
-	c.mu.Lock()
-	cn, err := c._conn(nil)
-	c.mu.Unlock()
-	return cn, err
+// Deprecated. Use Subscribe/PSubscribe instead.
+func (c *Client) PubSub() *PubSub {
+	return &PubSub{
+		base: &baseClient{
+			opt:      c.opt,
+			connPool: pool.NewStickyConnPool(c.connPool.(*pool.ConnPool), false),
+		},
+	}
 }
 
-func (c *PubSub) _conn(channels []string) (*pool.Conn, error) {
-	if c.closed {
-		return nil, pool.ErrClosed
-	}
+// Subscribes the client to the specified channels.
+func (c *Client) Subscribe(channels ...string) (*PubSub, error) {
+	pubsub := c.PubSub()
+	return pubsub, pubsub.Subscribe(channels...)
+}
 
-	if c.cn != nil {
-		return c.cn, nil
-	}
+// Subscribes the client to the given patterns.
+func (c *Client) PSubscribe(channels ...string) (*PubSub, error) {
+	pubsub := c.PubSub()
+	return pubsub, pubsub.PSubscribe(channels...)
+}
 
-	cn, err := c.newConn(channels)
+func (c *PubSub) subscribe(redisCmd string, channels ...string) error {
+	cn, err := c.base.conn()
 	if err != nil {
-		return nil, err
+		return err
 	}
+	c.putConn(cn, err)
 
-	if err := c.resubscribe(cn); err != nil {
-		_ = c.closeConn(cn)
-		return nil, err
-	}
-
-	c.cn = cn
-	return cn, nil
-}
-
-func (c *PubSub) resubscribe(cn *pool.Conn) error {
-	var firstErr error
-	if len(c.channels) > 0 {
-		if err := c._subscribe(cn, "subscribe", c.channels...); err != nil && firstErr == nil {
-			firstErr = err
-		}
-	}
-	if len(c.patterns) > 0 {
-		if err := c._subscribe(cn, "psubscribe", c.patterns...); err != nil && firstErr == nil {
-			firstErr = err
-		}
-	}
-	return firstErr
-}
-
-func (c *PubSub) _subscribe(cn *pool.Conn, redisCmd string, channels ...string) error {
 	args := make([]interface{}, 1+len(channels))
 	args[0] = redisCmd
 	for i, channel := range channels {
@@ -84,113 +64,80 @@ func (c *PubSub) _subscribe(cn *pool.Conn, redisCmd string, channels ...string) 
 	}
 	cmd := NewSliceCmd(args...)
 
-	cn.SetWriteTimeout(c.opt.WriteTimeout)
 	return writeCmd(cn, cmd)
 }
 
-func (c *PubSub) releaseConn(cn *pool.Conn, err error) {
-	c.mu.Lock()
-	c._releaseConn(cn, err)
-	c.mu.Unlock()
-}
-
-func (c *PubSub) _releaseConn(cn *pool.Conn, err error) {
-	if c.cn != cn {
-		return
-	}
-	if internal.IsBadConn(err, true) {
-		_ = c.closeTheCn()
-	}
-}
-
-func (c *PubSub) closeTheCn() error {
-	err := c.closeConn(c.cn)
-	c.cn = nil
-	return err
-}
-
-func (c *PubSub) Close() error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if c.closed {
-		return pool.ErrClosed
-	}
-	c.closed = true
-
-	if c.cn != nil {
-		return c.closeTheCn()
-	}
-	return nil
-}
-
-// Subscribes the client to the specified channels. It returns
-// empty subscription if there are no channels.
+// Subscribes the client to the specified channels.
 func (c *PubSub) Subscribe(channels ...string) error {
-	c.mu.Lock()
-	err := c.subscribe("subscribe", channels...)
-	c.channels = appendIfNotExists(c.channels, channels...)
-	c.mu.Unlock()
+	err := c.subscribe("SUBSCRIBE", channels...)
+	if err == nil {
+		c.channels = append(c.channels, channels...)
+		c.nsub += len(channels)
+	}
 	return err
 }
 
-// Subscribes the client to the given patterns. It returns
-// empty subscription if there are no patterns.
+// Subscribes the client to the given patterns.
 func (c *PubSub) PSubscribe(patterns ...string) error {
-	c.mu.Lock()
-	err := c.subscribe("psubscribe", patterns...)
-	c.patterns = appendIfNotExists(c.patterns, patterns...)
-	c.mu.Unlock()
+	err := c.subscribe("PSUBSCRIBE", patterns...)
+	if err == nil {
+		c.patterns = append(c.patterns, patterns...)
+		c.nsub += len(patterns)
+	}
 	return err
+}
+
+func remove(ss []string, es ...string) []string {
+	if len(es) == 0 {
+		return ss[:0]
+	}
+	for _, e := range es {
+		for i, s := range ss {
+			if s == e {
+				ss = append(ss[:i], ss[i+1:]...)
+				break
+			}
+		}
+	}
+	return ss
 }
 
 // Unsubscribes the client from the given channels, or from all of
 // them if none is given.
 func (c *PubSub) Unsubscribe(channels ...string) error {
-	c.mu.Lock()
-	err := c.subscribe("unsubscribe", channels...)
-	c.channels = remove(c.channels, channels...)
-	c.mu.Unlock()
+	err := c.subscribe("UNSUBSCRIBE", channels...)
+	if err == nil {
+		c.channels = remove(c.channels, channels...)
+	}
 	return err
 }
 
 // Unsubscribes the client from the given patterns, or from all of
 // them if none is given.
 func (c *PubSub) PUnsubscribe(patterns ...string) error {
-	c.mu.Lock()
-	err := c.subscribe("punsubscribe", patterns...)
-	c.patterns = remove(c.patterns, patterns...)
-	c.mu.Unlock()
+	err := c.subscribe("PUNSUBSCRIBE", patterns...)
+	if err == nil {
+		c.patterns = remove(c.patterns, patterns...)
+	}
 	return err
 }
 
-func (c *PubSub) subscribe(redisCmd string, channels ...string) error {
-	cn, err := c._conn(channels)
+func (c *PubSub) Close() error {
+	return c.base.Close()
+}
+
+func (c *PubSub) Ping(payload string) error {
+	cn, err := c.base.conn()
 	if err != nil {
 		return err
 	}
 
-	err = c._subscribe(cn, redisCmd, channels...)
-	c._releaseConn(cn, err)
-	return err
-}
-
-func (c *PubSub) Ping(payload ...string) error {
-	args := []interface{}{"ping"}
-	if len(payload) == 1 {
-		args = append(args, payload[0])
+	args := []interface{}{"PING"}
+	if payload != "" {
+		args = append(args, payload)
 	}
 	cmd := NewCmd(args...)
-
-	cn, err := c.conn()
-	if err != nil {
-		return err
-	}
-
-	cn.SetWriteTimeout(c.opt.WriteTimeout)
-	err = writeCmd(cn, cmd)
-	c.releaseConn(cn, err)
-	return err
+	return writeCmd(cn, cmd)
 }
 
 // Message received after a successful subscription to channel.
@@ -218,6 +165,20 @@ func (m *Message) String() string {
 	return fmt.Sprintf("Message<%s: %s>", m.Channel, m.Payload)
 }
 
+// TODO: remove PMessage if favor of Message
+
+// Message matching a pattern-matching subscription received as result
+// of a PUBLISH command issued by another client.
+type PMessage struct {
+	Channel string
+	Pattern string
+	Payload string
+}
+
+func (m *PMessage) String() string {
+	return fmt.Sprintf("PMessage<%s: %s>", m.Channel, m.Payload)
+}
+
 // Pong received as result of a PING command issued by another client.
 type Pong struct {
 	Payload string
@@ -230,40 +191,31 @@ func (p *Pong) String() string {
 	return "Pong"
 }
 
-func (c *PubSub) newMessage(reply interface{}) (interface{}, error) {
-	switch reply := reply.(type) {
-	case string:
-		return &Pong{
-			Payload: reply,
+func (c *PubSub) newMessage(reply []interface{}) (interface{}, error) {
+	switch kind := reply[0].(string); kind {
+	case "subscribe", "unsubscribe", "psubscribe", "punsubscribe":
+		return &Subscription{
+			Kind:    kind,
+			Channel: reply[1].(string),
+			Count:   int(reply[2].(int64)),
 		}, nil
-	case []interface{}:
-		switch kind := reply[0].(string); kind {
-		case "subscribe", "unsubscribe", "psubscribe", "punsubscribe":
-			return &Subscription{
-				Kind:    kind,
-				Channel: reply[1].(string),
-				Count:   int(reply[2].(int64)),
-			}, nil
-		case "message":
-			return &Message{
-				Channel: reply[1].(string),
-				Payload: reply[2].(string),
-			}, nil
-		case "pmessage":
-			return &Message{
-				Pattern: reply[1].(string),
-				Channel: reply[2].(string),
-				Payload: reply[3].(string),
-			}, nil
-		case "pong":
-			return &Pong{
-				Payload: reply[1].(string),
-			}, nil
-		default:
-			return nil, fmt.Errorf("redis: unsupported pubsub message: %q", kind)
-		}
+	case "message":
+		return &Message{
+			Channel: reply[1].(string),
+			Payload: reply[2].(string),
+		}, nil
+	case "pmessage":
+		return &PMessage{
+			Pattern: reply[1].(string),
+			Channel: reply[2].(string),
+			Payload: reply[3].(string),
+		}, nil
+	case "pong":
+		return &Pong{
+			Payload: reply[1].(string),
+		}, nil
 	default:
-		return nil, fmt.Errorf("redis: unsupported pubsub message: %#v", reply)
+		return nil, fmt.Errorf("redis: unsupported pubsub notification: %q", kind)
 	}
 }
 
@@ -271,28 +223,29 @@ func (c *PubSub) newMessage(reply interface{}) (interface{}, error) {
 // is not received in time. This is low-level API and most clients
 // should use ReceiveMessage.
 func (c *PubSub) ReceiveTimeout(timeout time.Duration) (interface{}, error) {
-	if c.cmd == nil {
-		c.cmd = NewCmd()
+	if c.nsub == 0 {
+		c.resubscribe()
 	}
 
-	cn, err := c.conn()
+	cn, err := c.base.conn()
+	if err != nil {
+		return nil, err
+	}
+	cn.ReadTimeout = timeout
+
+	cmd := NewSliceCmd()
+	err = cmd.readReply(cn)
+	c.putConn(cn, err)
 	if err != nil {
 		return nil, err
 	}
 
-	cn.SetReadTimeout(timeout)
-	err = c.cmd.readReply(cn)
-	c.releaseConn(cn, err)
-	if err != nil {
-		return nil, err
-	}
-
-	return c.newMessage(c.cmd.Val())
+	return c.newMessage(cmd.Val())
 }
 
-// Receive returns a message as a Subscription, Message, Pong or error.
-// See PubSub example for details. This is low-level API and most clients
-// should use ReceiveMessage.
+// Receive returns a message as a Subscription, Message, PMessage,
+// Pong or error. See PubSub example for details. This is low-level
+// API and most clients should use ReceiveMessage.
 func (c *PubSub) Receive() (interface{}, error) {
 	return c.ReceiveTimeout(0)
 }
@@ -309,21 +262,21 @@ func (c *PubSub) receiveMessage(timeout time.Duration) (*Message, error) {
 	for {
 		msgi, err := c.ReceiveTimeout(timeout)
 		if err != nil {
-			if !internal.IsNetworkError(err) {
+			if !isNetworkError(err) {
 				return nil, err
 			}
 
 			errNum++
 			if errNum < 3 {
 				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-					err := c.Ping()
+					err := c.Ping("")
 					if err != nil {
 						internal.Logf("PubSub.Ping failed: %s", err)
 					}
 				}
 			} else {
-				// 3 consequent errors - connection is broken or
-				// Redis Server is down.
+				// 3 consequent errors - connection is bad
+				// and/or Redis Server is down.
 				// Sleep to not exceed max number of open connections.
 				time.Sleep(time.Second)
 			}
@@ -340,56 +293,36 @@ func (c *PubSub) receiveMessage(timeout time.Duration) (*Message, error) {
 			// Ignore.
 		case *Message:
 			return msg, nil
+		case *PMessage:
+			return &Message{
+				Channel: msg.Channel,
+				Pattern: msg.Pattern,
+				Payload: msg.Payload,
+			}, nil
 		default:
 			return nil, fmt.Errorf("redis: unknown message: %T", msgi)
 		}
 	}
 }
 
-// Channel returns a channel for concurrently receiving messages.
-// The channel is closed with PubSub.
-func (c *PubSub) Channel() <-chan *Message {
-	ch := make(chan *Message, 100)
-	go func() {
-		for {
-			msg, err := c.ReceiveMessage()
-			if err != nil {
-				if err == pool.ErrClosed {
-					break
-				}
-				continue
-			}
-			ch <- msg
-		}
-		close(ch)
-	}()
-	return ch
+func (c *PubSub) putConn(cn *pool.Conn, err error) {
+	if !c.base.putConn(cn, err, true) {
+		c.nsub = 0
+	}
 }
 
-func appendIfNotExists(ss []string, es ...string) []string {
-loop:
-	for _, e := range es {
-		for _, s := range ss {
-			if s == e {
-				continue loop
-			}
-		}
-		ss = append(ss, e)
+func (c *PubSub) resubscribe() {
+	if c.base.closed() {
+		return
 	}
-	return ss
-}
-
-func remove(ss []string, es ...string) []string {
-	if len(es) == 0 {
-		return ss[:0]
-	}
-	for _, e := range es {
-		for i, s := range ss {
-			if s == e {
-				ss = append(ss[:i], ss[i+1:]...)
-				break
-			}
+	if len(c.channels) > 0 {
+		if err := c.Subscribe(c.channels...); err != nil {
+			internal.Logf("Subscribe failed: %s", err)
 		}
 	}
-	return ss
+	if len(c.patterns) > 0 {
+		if err := c.PSubscribe(c.patterns...); err != nil {
+			internal.Logf("PSubscribe failed: %s", err)
+		}
+	}
 }

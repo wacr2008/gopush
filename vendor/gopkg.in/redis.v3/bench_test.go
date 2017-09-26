@@ -5,7 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-redis/redis"
+	redigo "github.com/garyburd/redigo/redis"
+
+	"gopkg.in/redis.v3"
 )
 
 func benchmarkRedisClient(poolSize int) *redis.Client {
@@ -16,7 +18,7 @@ func benchmarkRedisClient(poolSize int) *redis.Client {
 		WriteTimeout: time.Second,
 		PoolSize:     poolSize,
 	})
-	if err := client.FlushDB().Err(); err != nil {
+	if err := client.FlushDb().Err(); err != nil {
 		panic(err)
 	}
 	return client
@@ -37,7 +39,7 @@ func BenchmarkRedisPing(b *testing.B) {
 	})
 }
 
-func BenchmarkRedisSetString(b *testing.B) {
+func BenchmarkRedisSet(b *testing.B) {
 	client := benchmarkRedisClient(10)
 	defer client.Close()
 
@@ -69,7 +71,7 @@ func BenchmarkRedisGetNil(b *testing.B) {
 	})
 }
 
-func benchmarkSetRedis(b *testing.B, poolSize, payloadSize int) {
+func benchmarkSetGoRedis(b *testing.B, poolSize, payloadSize int) {
 	client := benchmarkRedisClient(poolSize)
 	defer client.Close()
 
@@ -86,36 +88,93 @@ func benchmarkSetRedis(b *testing.B, poolSize, payloadSize int) {
 	})
 }
 
-func BenchmarkSetRedis10Conns64Bytes(b *testing.B) {
-	benchmarkSetRedis(b, 10, 64)
+func BenchmarkSetGoRedis10Conns64Bytes(b *testing.B) {
+	benchmarkSetGoRedis(b, 10, 64)
 }
 
-func BenchmarkSetRedis100Conns64Bytes(b *testing.B) {
-	benchmarkSetRedis(b, 100, 64)
+func BenchmarkSetGoRedis100Conns64Bytes(b *testing.B) {
+	benchmarkSetGoRedis(b, 100, 64)
 }
 
-func BenchmarkSetRedis10Conns1KB(b *testing.B) {
-	benchmarkSetRedis(b, 10, 1024)
+func BenchmarkSetGoRedis10Conns1KB(b *testing.B) {
+	benchmarkSetGoRedis(b, 10, 1024)
 }
 
-func BenchmarkSetRedis100Conns1KB(b *testing.B) {
-	benchmarkSetRedis(b, 100, 1024)
+func BenchmarkSetGoRedis100Conns1KB(b *testing.B) {
+	benchmarkSetGoRedis(b, 100, 1024)
 }
 
-func BenchmarkSetRedis10Conns10KB(b *testing.B) {
-	benchmarkSetRedis(b, 10, 10*1024)
+func BenchmarkSetGoRedis10Conns10KB(b *testing.B) {
+	benchmarkSetGoRedis(b, 10, 10*1024)
 }
 
-func BenchmarkSetRedis100Conns10KB(b *testing.B) {
-	benchmarkSetRedis(b, 100, 10*1024)
+func BenchmarkSetGoRedis100Conns10KB(b *testing.B) {
+	benchmarkSetGoRedis(b, 100, 10*1024)
 }
 
-func BenchmarkSetRedis10Conns1MB(b *testing.B) {
-	benchmarkSetRedis(b, 10, 1024*1024)
+func BenchmarkSetGoRedis10Conns1MB(b *testing.B) {
+	benchmarkSetGoRedis(b, 10, 1024*1024)
 }
 
-func BenchmarkSetRedis100Conns1MB(b *testing.B) {
-	benchmarkSetRedis(b, 100, 1024*1024)
+func BenchmarkSetGoRedis100Conns1MB(b *testing.B) {
+	benchmarkSetGoRedis(b, 100, 1024*1024)
+}
+
+func benchmarkSetRedigo(b *testing.B, poolSize, payloadSize int) {
+	pool := &redigo.Pool{
+		Dial: func() (redigo.Conn, error) {
+			return redigo.DialTimeout("tcp", ":6379", time.Second, time.Second, time.Second)
+		},
+		MaxActive: poolSize,
+		MaxIdle:   poolSize,
+	}
+	defer pool.Close()
+
+	value := string(bytes.Repeat([]byte{'1'}, payloadSize))
+
+	b.ResetTimer()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			conn := pool.Get()
+			if _, err := conn.Do("SET", "key", value); err != nil {
+				b.Fatal(err)
+			}
+			conn.Close()
+		}
+	})
+}
+
+func BenchmarkSetRedigo10Conns64Bytes(b *testing.B) {
+	benchmarkSetRedigo(b, 10, 64)
+}
+
+func BenchmarkSetRedigo100Conns64Bytes(b *testing.B) {
+	benchmarkSetRedigo(b, 100, 64)
+}
+
+func BenchmarkSetRedigo10Conns1KB(b *testing.B) {
+	benchmarkSetRedigo(b, 10, 1024)
+}
+
+func BenchmarkSetRedigo100Conns1KB(b *testing.B) {
+	benchmarkSetRedigo(b, 100, 1024)
+}
+
+func BenchmarkSetRedigo10Conns10KB(b *testing.B) {
+	benchmarkSetRedigo(b, 10, 10*1024)
+}
+
+func BenchmarkSetRedigo100Conns10KB(b *testing.B) {
+	benchmarkSetRedigo(b, 100, 10*1024)
+}
+
+func BenchmarkSetRedigo10Conns1MB(b *testing.B) {
+	benchmarkSetRedigo(b, 10, 1024*1024)
+}
+
+func BenchmarkSetRedigo100Conns1MB(b *testing.B) {
+	benchmarkSetRedigo(b, 100, 1024*1024)
 }
 
 func BenchmarkRedisSetGetBytes(b *testing.B) {
@@ -188,7 +247,7 @@ func BenchmarkPipeline(b *testing.B) {
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			_, err := client.Pipelined(func(pipe redis.Pipeliner) error {
+			_, err := client.Pipelined(func(pipe *redis.Pipeline) error {
 				pipe.Set("key", "hello", 0)
 				pipe.Expire("key", time.Second)
 				return nil

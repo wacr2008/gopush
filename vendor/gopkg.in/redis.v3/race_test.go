@@ -8,10 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-redis/redis"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"gopkg.in/redis.v3"
+	"gopkg.in/redis.v3/internal/pool"
 )
 
 var _ = Describe("races", func() {
@@ -20,7 +21,7 @@ var _ = Describe("races", func() {
 
 	BeforeEach(func() {
 		client = redis.NewClient(redisOptions())
-		Expect(client.FlushDB().Err()).To(BeNil())
+		Expect(client.FlushDb().Err()).To(BeNil())
 
 		C, N = 10, 1000
 		if testing.Short() {
@@ -103,9 +104,7 @@ var _ = Describe("races", func() {
 	})
 
 	It("should handle big vals in Get", func() {
-		C, N = 4, 100
-
-		bigVal := bytes.Repeat([]byte{'*'}, 1<<17) // 128kb
+		bigVal := string(bytes.Repeat([]byte{'*'}, 1<<17)) // 128kb
 
 		err := client.Set("key", bigVal, 0).Err()
 		Expect(err).NotTo(HaveOccurred())
@@ -116,7 +115,7 @@ var _ = Describe("races", func() {
 
 		perform(C, func(id int) {
 			for i := 0; i < N; i++ {
-				got, err := client.Get("key").Bytes()
+				got, err := client.Get("key").Result()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(got).To(Equal(bigVal))
 			}
@@ -125,8 +124,7 @@ var _ = Describe("races", func() {
 
 	It("should handle big vals in Set", func() {
 		C, N = 4, 100
-
-		bigVal := bytes.Repeat([]byte{'*'}, 1<<17) // 128kb
+		bigVal := string(bytes.Repeat([]byte{'*'}, 1<<17)) // 128kb
 
 		perform(C, func(id int) {
 			for i := 0; i < N; i++ {
@@ -136,13 +134,44 @@ var _ = Describe("races", func() {
 		})
 	})
 
+	It("should PubSub", func() {
+		connPool := client.Pool()
+		connPool.(*pool.ConnPool).DialLimiter = nil
+
+		perform(C, func(id int) {
+			for i := 0; i < N; i++ {
+				pubsub, err := client.Subscribe(fmt.Sprintf("mychannel%d", id))
+				Expect(err).NotTo(HaveOccurred())
+
+				go func() {
+					defer GinkgoRecover()
+
+					time.Sleep(time.Millisecond)
+					err := pubsub.Close()
+					Expect(err).NotTo(HaveOccurred())
+				}()
+
+				_, err = pubsub.ReceiveMessage()
+				Expect(err.Error()).To(ContainSubstring("closed"))
+
+				val := "echo" + strconv.Itoa(i)
+				echo, err := client.Echo(val).Result()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(echo).To(Equal(val))
+			}
+		})
+
+		Expect(connPool.Len()).To(Equal(connPool.FreeLen()))
+		Expect(connPool.Len()).To(BeNumerically("<=", 10))
+	})
+
 	It("should select db", func() {
 		err := client.Set("db", 1, 0).Err()
 		Expect(err).NotTo(HaveOccurred())
 
 		perform(C, func(id int) {
 			opt := redisOptions()
-			opt.DB = id
+			opt.DB = int64(id)
 			client := redis.NewClient(opt)
 			for i := 0; i < N; i++ {
 				err := client.Set("db", id, 0).Err()
@@ -164,7 +193,7 @@ var _ = Describe("races", func() {
 	It("should select DB with read timeout", func() {
 		perform(C, func(id int) {
 			opt := redisOptions()
-			opt.DB = id
+			opt.DB = int64(id)
 			opt.ReadTimeout = time.Nanosecond
 			client := redis.NewClient(opt)
 
@@ -177,71 +206,5 @@ var _ = Describe("races", func() {
 			err := client.Close()
 			Expect(err).NotTo(HaveOccurred())
 		})
-	})
-
-	It("should Watch/Unwatch", func() {
-		err := client.Set("key", "0", 0).Err()
-		Expect(err).NotTo(HaveOccurred())
-
-		perform(C, func(id int) {
-			for i := 0; i < N; i++ {
-				err := client.Watch(func(tx *redis.Tx) error {
-					val, err := tx.Get("key").Result()
-					Expect(err).NotTo(HaveOccurred())
-					Expect(val).NotTo(Equal(redis.Nil))
-
-					num, err := strconv.ParseInt(val, 10, 64)
-					Expect(err).NotTo(HaveOccurred())
-
-					cmds, err := tx.Pipelined(func(pipe redis.Pipeliner) error {
-						pipe.Set("key", strconv.FormatInt(num+1, 10), 0)
-						return nil
-					})
-					Expect(cmds).To(HaveLen(1))
-					return err
-				}, "key")
-				if err == redis.TxFailedErr {
-					i--
-					continue
-				}
-				Expect(err).NotTo(HaveOccurred())
-			}
-		})
-
-		val, err := client.Get("key").Int64()
-		Expect(err).NotTo(HaveOccurred())
-		Expect(val).To(Equal(int64(C * N)))
-	})
-
-	It("should Pipeline", func() {
-		perform(C, func(id int) {
-			pipe := client.Pipeline()
-			for i := 0; i < N; i++ {
-				pipe.Echo(fmt.Sprint(i))
-			}
-
-			cmds, err := pipe.Exec()
-			Expect(err).NotTo(HaveOccurred())
-			Expect(cmds).To(HaveLen(N))
-
-			for i := 0; i < N; i++ {
-				Expect(cmds[i].(*redis.StringCmd).Val()).To(Equal(fmt.Sprint(i)))
-			}
-		})
-	})
-
-	It("should Pipeline", func() {
-		pipe := client.Pipeline()
-		perform(N, func(id int) {
-			pipe.Incr("key")
-		})
-
-		cmds, err := pipe.Exec()
-		Expect(err).NotTo(HaveOccurred())
-		Expect(cmds).To(HaveLen(N))
-
-		n, err := client.Get("key").Int64()
-		Expect(err).NotTo(HaveOccurred())
-		Expect(n).To(Equal(int64(N)))
 	})
 })
