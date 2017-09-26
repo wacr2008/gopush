@@ -1,0 +1,18 @@
+package: github.com/ikenchina/gopush
+import:
+- package: github.com/Shopify/sarama
+  version: v1.12.0
+- package: github.com/ikenchina/golog
+- package: github.com/nsqio/go-nsq
+  version: v1.0.7
+- package: github.com/pquerna/ffjson
+  subpackages:
+  - ffjson
+- package: github.com/stathat/consistent
+- package: github.com/wvanbergen/kafka
+  subpackages:
+  - consumergroup
+- package: golang.org/x/net/websocket
+- package: gopkg.in/redis.v3
+  version: v6.7.0
+- package: gopkg.in/yaml.v2
